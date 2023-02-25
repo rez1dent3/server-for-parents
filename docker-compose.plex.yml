@@ -1,0 +1,70 @@
+version: '3.8'
+services:
+  plex:
+    image: plexinc/pms-docker
+    ports:
+      - 32400:32400/tcp
+      - 3005:3005/tcp
+      - 8324:8324/tcp
+      - 32469:32469/tcp
+      - 1900:1900/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    environment:
+      - TZ=Europe/Moscow
+      - ADVERTISE_IP=http://192.168.1.47:32400/
+    hostname: mediaserver
+    healthcheck:
+      test: curl --connect-timeout 15 --silent --show-error --fail http://127.0.0.1:32400/identity
+      interval: 30s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+    volumes:
+      - /opt/mediaserver/pms/config:/config
+      - /tmp:/transcode
+      - /media/user:/media/user:shared
+      - type: volume
+        source: nfs_films
+        target: /films
+        volume:
+          nocopy: true
+      - type: volume
+        source: nfs_serials
+        target: /serials
+        volume:
+          nocopy: true
+      - type: volume
+        source: nfs_multfilms
+        target: /multfilms
+        volume:
+          nocopy: true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10mb"
+        max-file: "1"
+
+volumes:
+  nfs_films:
+    driver_opts:
+      type: "nfs"
+      o: "nfsvers=4,addr=krd.mediaserver.internal,nolock,soft,ro"
+      device: ":/mnt/md0/films"
+  nfs_serials:
+    driver_opts:
+      type: "nfs"
+      o: "nfsvers=4,addr=krd.mediaserver.internal,nolock,soft,ro"
+      device: ":/mnt/md0/serials"
+  nfs_multfilms:
+    driver_opts:
+      type: "nfs"
+      o: "nfsvers=4,addr=krd.mediaserver.internal,nolock,soft,ro"
+      device: ":/mnt/md0/multfilms"
