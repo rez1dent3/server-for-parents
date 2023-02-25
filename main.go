@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+	"os"
+	"os/exec"
 	"syscall"
 )
 
@@ -13,7 +15,12 @@ func main() {
 			return
 		}
 
-		err := syscall.Shutdown(syscall.SYS_SHUTDOWN, 0)
+		binary, lookErr := exec.LookPath("shutdown")
+		if lookErr != nil {
+			panic(lookErr)
+		}
+
+		err := syscall.Exec(binary, []string{"shutdown", "-P", "now"}, os.Environ())
 		if err != nil {
 			return
 		}
