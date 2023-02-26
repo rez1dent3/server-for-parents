@@ -22,18 +22,28 @@
     <section id="app" class="section">
         <div class="container">
             <h1 class="title">{{ message }}</h1>
-            <button @click="shutdown" class="button is-danger">Выключить</button>
+            <button @click="shutdown" class="button is-danger" :class="{'is-loading': !init}" :disabled='offline'>Выключить</button>
         </div>
     </section>
 
     <script>
         const { createApp } = Vue
-
-        createApp({
+        const vm = createApp({
             data() {
                 return {
-                    message: 'MediaServer'
+                    message: 'MediaServer',
+                    offline: true,
+                    init: false,
                 }
+            },
+            mounted: function () {
+                setInterval(async function () {
+                    await fetch('/ping', {method: 'POST'})
+                        .then(() => vm.offline = false)
+                        .catch(() => vm.offline = true)
+
+                    vm.init = true
+                }, 1000)
             },
             methods: {
                 shutdown() {

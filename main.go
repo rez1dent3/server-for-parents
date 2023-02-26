@@ -10,6 +10,13 @@ import (
 func main() {
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/", fs)
+	http.HandleFunc("/ping", func(writer http.ResponseWriter, _ *http.Request) {
+		_, err := writer.Write([]byte("pong"))
+		if err != nil {
+			return
+		}
+	})
+
 	http.HandleFunc("/shutdown", func(_ http.ResponseWriter, request *http.Request) {
 		if request.Method != http.MethodPost {
 			return
